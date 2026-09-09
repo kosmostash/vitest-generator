@@ -1,0 +1,31 @@
+import { describe, expect, test } from "vitest";
+
+{{#if hasFetchClients}}
+import { api, failure } from "{{ createImport 'lib' 'test' }}";
+
+const client = api["{{route.name}}"];
+{{else}}
+import { failure, request } from "{{ createImport 'lib' 'test' }}";
+{{/if}}
+
+describe("{{route.name}}", () => {
+  /**
+   * This route answers:
+   *
+{{#each methods}}
+{{#if ../hasFetchClients}}
+   *   await client.{{method}}({{params}}{{#if payload}}, {{{payload}}}{{/if}});{{#if statuses.length}}  // {{statuses}}{{/if}}
+{{else}}
+   *   await request("{{method}}", "{{../route.name}}"{{#if payload}}, {{{payload}}}{{/if}});
+{{/if}}
+{{/each}}
+   *
+   * A call that is meant to fail hands back the status and the error body:
+   *
+   *   const { status, body } = await failure(...);
+   */
+
+{{#each methods}}
+  test.todo("{{method}}");
+{{/each}}
+});

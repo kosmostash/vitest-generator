@@ -1,0 +1,8 @@
+{
+  "name": "vitest-generator-fixture",
+  "private": true,
+  "type": "module",
+  "distDir": "dist",
+  "devPort": 4556,
+  "previewPort": 4558
+}

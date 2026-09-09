@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src",
+    "env.d.ts"
+  ],
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "pkg",
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true
+  },
+  "exclude": [
+    "src/templates"
+  ]
+}

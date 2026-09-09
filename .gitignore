@@ -1,0 +1,6 @@
+node_modules/
+pkg/
+coverage/
+
+# derived into the fixture by the test run
+test/@fixtures/app/lib/app/test/

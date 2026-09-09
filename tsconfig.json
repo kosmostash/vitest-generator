@@ -1,0 +1,37 @@
+{
+  "include": [
+    "src",
+    "test",
+    "env.d.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ],
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ESNext",
+    "lib": [
+      "ESNext"
+    ],
+    "types": [
+      "@types/node"
+    ],
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "useUnknownInCatchVariables": true,
+    "allowArbitraryExtensions": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "exclude": [
+    "src/templates",
+    "test/@fixtures"
+  ]
+}
