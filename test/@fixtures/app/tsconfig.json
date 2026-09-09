@@ -1,0 +1,25 @@
+{
+  "include": ["src", "lib"],
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ESNext",
+    "types": ["@types/node", "vitest/globals"],
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "allowArbitraryExtensions": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@/*": ["${configDir}/*"],
+      "~/*": ["${configDir}/src/app/*"],
+      "_/*": ["${configDir}/lib/app/*"]
+    }
+  }
+}

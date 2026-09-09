@@ -1,0 +1,17 @@
+import { defineVitestConfig } from "@kosmojs/vitest-generator/config";
+
+/**
+ * One vitest project per source folder, each wired to that folder's `_/`, `~/`
+ * and `@/` imports and to its api app - so a test can import `_/test` and call
+ * the routes in process.
+ *
+ * Everything vitest accepts can be passed through; `projects` adds your own,
+ * for tests that are not tied to a source folder:
+ *
+ * ```ts
+ * export default defineVitestConfig({
+ *   projects: [{ test: { name: "db", include: ["db/**\/*.test.ts"] } }],
+ * });
+ * ```
+ * */
+export default defineVitestConfig();

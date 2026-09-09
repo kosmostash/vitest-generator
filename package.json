@@ -1,0 +1,59 @@
+{
+  "name": "@kosmojs/vitest-generator",
+  "version": "0.1.0",
+  "description": "Vitest generator for KosmoJS - in-process API tests through the typed fetch clients",
+  "type": "module",
+  "license": "MIT",
+  "author": "kosmostash",
+  "keywords": [
+    "kosmojs",
+    "kosmo-generator",
+    "vitest",
+    "api-testing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kosmostash/vitest-generator.git"
+  },
+  "files": [
+    "pkg/*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./pkg/index.d.ts",
+      "default": "./pkg/index.js"
+    },
+    "./config": {
+      "types": "./pkg/config.d.ts",
+      "default": "./pkg/config.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/@fixtures/app/tsconfig.json",
+    "test": "pnpm build && vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@kosmojs/core": "^0.5.0",
+    "@kosmojs/lib": "^0.5.0",
+    "jiti": "^2.7.0",
+    "light-my-request": "^6.6.0",
+    "tinyglobby": "^0.2.17"
+  },
+  "peerDependencies": {
+    "vite": "^7.0.0 || ^8.0.0",
+    "vitest": ">=3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "hono": "^4.13.7",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

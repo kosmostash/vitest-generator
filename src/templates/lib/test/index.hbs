@@ -1,0 +1,185 @@
+import { stringifySearchParams } from "@kosmojs/core";
+import { ValidationError } from "@kosmojs/core/errors";
+
+import backendApp from "virtual:kosmo/backend-app";
+{{#if hasFetchClients}}
+
+import fetchClients from "{{ createImport 'lib' 'fetch' }}";
+{{/if}}
+
+import { clearHeaders, setHeaders, withHeaders } from "./context";
+import { origin, transport } from "./transport";
+
+/**
+ * The test harness for this source folder.
+ *
+ * Everything here dispatches into the api app in the same process - no port,
+ * no server, no supertest. It is the SSR path the framework already uses,
+ * pointed at your tests.
+ * */
+
+export { ValidationError, clearHeaders, setHeaders, withHeaders };
+
+{{#if hasFetchClients}}
+export type { ResponseT } from "{{ createImport 'lib' 'fetch' }}";
+
+/**
+ * The typed fetch clients - the same ones your pages import from `_/fetch`,
+ * with params, payload and response typed off the route definitions, and the
+ * same client-side validation running before the call.
+ * */
+export const api = fetchClients;
+
+{{/if}}
+/** This folder's api prefix, e.g. `"/api"`. */
+export const base = {{{base}}};
+
+/** The api app itself, for the rare test that needs it directly. */
+export const app = backendApp;
+
+export type RequestOptions = Omit<RequestInit, "body"> & {
+  /** sent as a JSON body, with the matching content-type */
+  json?: unknown;
+  /** sent as `application/x-www-form-urlencoded`, or as multipart for a FormData */
+  form?: Record<string, string> | FormData;
+  /** sent as-is */
+  body?: BodyInit | null;
+  /** appended as a query string, serialized the way the fetch clients serialize it */
+  query?: Record<string, unknown>;
+};
+
+/**
+ * An untyped request, for what the typed clients deliberately hide: a status
+ * code, a header, a redirect, a route that declares no response.
+ *
+ * The path is joined onto `base` unless it already starts with a slash:
+ *
+ * ```ts
+ * await request("GET", "users");        // -> /api/users
+ * await request("GET", "/healthz");     // -> /healthz
+ * await request.post("users", { json: { name: "Jane" } });
+ * ```
+ * */
+const send = async (
+  method: string,
+  path: string,
+  options: RequestOptions = {},
+): Promise<Response> => {
+  const { json, form, query, body, headers, ...init } = options;
+
+  const url = new URL(
+    path.startsWith("/") ? path : [base, path].join("/").replace(/\/+/g, "/"),
+    origin,
+  );
+
+  if (query) {
+    url.search = stringifySearchParams(query);
+  }
+
+  const requestHeaders = new Headers(headers);
+
+  let requestBody: BodyInit | null | undefined = body;
+
+  if (json !== undefined) {
+    requestBody = JSON.stringify(json);
+    if (!requestHeaders.has("content-type")) {
+      requestHeaders.set("content-type", "application/json");
+    }
+  } else if (form !== undefined) {
+    if (form instanceof FormData) {
+      // the Request constructor sets multipart content-type with its own boundary
+      requestBody = form;
+    } else {
+      requestBody = stringifySearchParams(form);
+      if (!requestHeaders.has("content-type")) {
+        requestHeaders.set(
+          "content-type",
+          "application/x-www-form-urlencoded",
+        );
+      }
+    }
+  }
+
+  return transport(url.toString(), {
+    ...init,
+    method,
+    headers: requestHeaders,
+    ...(requestBody === undefined ? {} : { body: requestBody }),
+  });
+};
+
+export const request = Object.assign(send, {
+  get: (path: string, options?: RequestOptions) => send("GET", path, options),
+  post: (path: string, options?: RequestOptions) => send("POST", path, options),
+  put: (path: string, options?: RequestOptions) => send("PUT", path, options),
+  patch: (path: string, options?: RequestOptions) => send("PATCH", path, options),
+  delete: (path: string, options?: RequestOptions) => send("DELETE", path, options),
+  head: (path: string, options?: RequestOptions) => send("HEAD", path, options),
+  options: (path: string, options?: RequestOptions) =>
+    send("OPTIONS", path, options),
+});
+
+export type Failure = {
+  /**
+   * The response status, or `undefined` when the call never left the process -
+   * which is what a `ValidationError` means: the client refused to send it.
+   * */
+  status: number | undefined;
+  /** the parsed error body, as your `api/errors.ts` shaped it */
+  body: unknown;
+  message: string;
+  /** set when client-side validation rejected the call */
+  validation: ValidationError | undefined;
+  /** whatever was thrown, for the assertions the fields above do not cover */
+  error: unknown;
+};
+
+/**
+ * Awaits a call that is supposed to fail and hands back what came out of it.
+ *
+ * Fetch clients throw on anything but a 2xx, which is right for application
+ * code and awkward in a test - this turns the throw back into a value:
+ *
+ * ```ts
+ * const { status, body } = await failure(api["users/[id]"].GET([404]));
+ * expect(status).toBe(404);
+ * ```
+ * */
+export const failure = async (call: Promise<unknown>): Promise<Failure> => {
+  const outcome = await call.then(
+    (value) => ({ failed: false as const, value }),
+    (error: unknown) => ({ failed: true as const, error }),
+  );
+
+  if (!outcome.failed) {
+    throw new Error(
+      `Expected the call to fail, it resolved with: ${JSON.stringify(outcome.value)}`,
+    );
+  }
+
+  const { error } = outcome;
+
+  if (error instanceof ValidationError) {
+    return {
+      status: undefined,
+      body: undefined,
+      message: error.errorMessage,
+      validation: error,
+      error,
+    };
+  }
+
+  const { response, body, message } = error as {
+    response?: Response;
+    body?: unknown;
+    message?: string;
+  };
+
+  return {
+    status: response?.status,
+    body,
+    message: message || String(error),
+    validation: undefined,
+    error,
+  };
+};
